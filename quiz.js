@@ -18,7 +18,7 @@
     node.addEventListener('click', action);
     return node;
   };
-  function clear() { host.replaceChildren(); document.getElementById('daily-results-view').hidden=true; }
+  function clear() { host.classList.remove('quiz-results'); host.replaceChildren(); document.getElementById('daily-results-view').hidden=true; }
   function focusHeading(node) {
     node.tabIndex = -1;
     node.focus({ preventScroll: true });
@@ -46,7 +46,7 @@
     const q = questions[current];
     const top = make('div', undefined, 'quiz-top');
     top.append(make('p', `Question ${current + 1} of ${questions.length}`, 'quiz-progress'));
-    top.append(button('See results so far', () => showResults(true), 'quiz-text-button'), button('End and clear', endQuiz, 'quiz-text-button'));
+    top.append(button('End and clear', endQuiz, 'quiz-text-button'));
     host.append(top);
     const title = heading('What would you choose?');
     const prompt = make('div', undefined, 'quiz-prompt');
@@ -83,36 +83,64 @@
       fieldset.append(label);
     });
     host.append(fieldset);
-    controls.append(previous, next, button('Skip', () => { responses.delete(q.id); moveForward(); }, 'quiz-text-button'));
+    controls.append(previous, next);
     host.append(controls);
     host.append(make('p', 'Your answers are not submitted or saved.', 'quiz-note'));
     focusHeading(title);
+    title.scrollIntoView({block: "start"});
   }
   function renderReview() { showResults(true); }
   function showResults(personal) {
-    clear();
-    const count=personal?responses.size:0;
-    const title=heading(count?'Agreement with your choices':'Model results');
-    if(count){
-      host.append(make('p', `${count} of ${questions.length} questions answered. Skipped questions are excluded.`, 'quiz-note'));
-      const rates=window.DAILY_RESULTS.choice_rates;
-      Object.entries(window.DAILY_RESULTS.models).forEach(([provider,model])=>{
-        const values=[...responses].map(([id,action])=>rates.find(r=>r.provider===provider&&r.analysis==='initial_only'&&r.scenario_id===id&&r.action===action)?.estimate).filter(Number.isFinite);
-        const score=values.length?values.reduce((a,b)=>a+b,0)/values.length:null;
-        const row=make('div',undefined,'agreement-row');
-        row.append(make('p',({openai:'GPT-6 Astra',anthropic:'Claude Opus 5.5',xai:'Grok 4.7',jev:'Jev 1.13 (exploratory)'})[provider]||model));
-        const track=make('div',undefined,'agreement-track'),fill=make('span');
-        fill.style.width=`${score??0}%`; track.append(fill);
-        row.append(track,make('strong',score===null?'Unavailable':`${score.toFixed(1)}%`)); host.append(row);
-      });
-      host.append(make('p', 'Agreement averages each model’s response percentage for the action you chose, giving each answered question equal weight. It measures agreement on these questions, not moral correctness.', 'quiz-note'));
-    }else if(personal){host.append(make('p','No questions answered yet. Model results appear below.','quiz-note'));}
+    if(personal && responses.size!==questions.length) return;
+    clear(); host.classList.add('quiz-results');
+    const data=window.DAILY_RESULTS, providers=Object.keys(data.models);
+    const names={openai:'GPT-6 Astra',anthropic:'Claude Opus 5.5',xai:'Grok 4.7',jev:'Jev 1.13'};
+    const rates=(p,q)=>data.choice_rates.filter(r=>r.provider===p&&r.analysis==='initial_only'&&r.scenario_id===q);
+    const winner=(rs)=>{const valid=rs.filter(r=>Number.isFinite(r.estimate));if(!valid.length)return null;const max=Math.max(...valid.map(r=>r.estimate));const best=valid.filter(r=>Math.abs(r.estimate-max)<1e-8);return best.length===1?best[0].action:'tie';};
+    const title=heading(personal?'Your answers and the models':'How the models answered');
+    host.append(make('p','24 questions · 100 planned calls per model per question · 9,594 valid answers across four models.','quiz-note'));
+    if(personal){
+      const cards=make('div',undefined,'match-cards');
+      providers.forEach(p=>{
+        let matches=0,ties=0,missing=0;
+        questions.forEach(q=>{const w=winner(rates(p,q.id));if(w==='tie')ties++;else if(w===null)missing++;else if(w===responses.get(q.id))matches++;});
+        const card=make('div',undefined,'match-card');
+        card.append(make('p',names[p]),make('strong',`${matches} / ${questions.length}`),make('p',`${(matches/questions.length*100).toFixed(1)}% answered the same`));
+        if(ties||missing)card.append(make('small',`${ties} tied · ${missing} unavailable (not counted as matches)`));
+        cards.append(card);
+      });host.append(cards);
+      host.append(make('p','A match means your answer equals the model’s most frequent choice for that question. Ties do not count as matches. This is agreement on this test, not moral correctness.','quiz-note'));
+    }
+    host.append(make('p','Each bar shows the model’s A/B/C choice shares across repeated calls. A, B and C refer to the actions in that row; expand a question to read them.','quiz-note'));
+    const wrap=make('div',undefined,'comparison-scroll'),table=make('table',undefined,'comparison-grid'),head=make('thead'),hr=make('tr');
+    hr.append(make('th','Question'));if(personal)hr.append(make('th','You'));providers.forEach(p=>hr.append(make('th',names[p])));head.append(hr);table.append(head);
+    const body=make('tbody');
+    questions.forEach((q,i)=>{
+      const row=make('tr'),desc=make('th'),details=make('details');
+      details.append(make('summary',`${i+1}. ${q.family} · ${q.id}`));
+      q.prompt.split(/\n\s*\n/).forEach(t=>details.append(make('p',t)));
+      q.options.forEach(o=>details.append(make('p',`${o.label}. ${o.text}`)));desc.append(details);row.append(desc);
+      if(personal)row.append(make('td',responses.get(q.id),'your-choice'));
+      providers.forEach(p=>{
+        const rs=rates(p,q.id),w=winner(rs),cell=make('td');
+        const match=personal&&w===responses.get(q.id);
+        cell.append(make('strong',w==='tie'?'Tie':w||'Unavailable'));
+        if(personal)cell.append(make('span',w==='tie'?' · tied':w===null?' · missing':match?' · same':' · different','match-label'));
+        const bar=make('div',undefined,'choice-stack');
+        rs.forEach(r=>{const part=make('span',r.estimate>=14?r.action:'',`choice-${r.action}`);part.style.width=`${r.estimate??0}%`;part.title=`${r.action}: ${r.estimate?.toFixed(1)}%`;bar.append(part);});cell.append(bar);
+        cell.append(make('small',rs.map(r=>`${r.action} ${Number.isFinite(r.estimate)?r.estimate.toFixed(1):'—'}%`).join(' · ')));
+        const cov=data.coverage.find(r=>r.provider===p&&r.scenario_id===q.id&&r.analysis==='initial_only');
+        if(cov?.unresolved)cell.append(make('small',`${cov.valid}/${cov.planned} valid · ${cov.unresolved} missing`));
+        row.append(cell);
+      });body.append(row);
+    });table.append(body);wrap.append(table);host.append(wrap);
+    host.append(make('p','Choice shares give equal weight to each option order. Six interrupted calls are excluded. Jev used a different structured interface and remains exploratory.','quiz-note'));
     const controls=make('div',undefined,'quiz-controls');
-    controls.append(button(count?'Review or edit answers':'Take the quiz',()=>{current=0;renderQuestion();}),button('Start again',endQuiz,'quiz-text-button')); host.append(controls);
+    if(!personal)controls.append(button('Take the quiz',()=>{responses.clear();current=0;renderQuestion();}));
+    controls.append(button('Start again',endQuiz));host.append(controls);
     host.append(make('p','Answers stay only in this page. They are not submitted or saved; reloading clears them.','quiz-note'));
-    document.getElementById('daily-results-view').hidden=false;
-    document.dispatchEvent(new CustomEvent('daily-comparison',{detail:count?Object.fromEntries(responses):{}}));
     focusHeading(title);
+    title.scrollIntoView({block: "start"});
   }
   intro();
 })();
