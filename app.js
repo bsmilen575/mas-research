@@ -77,7 +77,7 @@ $('condition').addEventListener('change',e=>{condition=e.target.value;index=0;sh
 $('steer').addEventListener('click',()=>{let open=$('steering').hidden;$('steering').hidden=!open;$('steer').setAttribute('aria-expanded',String(open));});
 $('pause').addEventListener('click',()=>{paused=!paused;$('pause').textContent=paused?'Play':'Pause';show()});
 $('next').addEventListener('click',next);
-document.querySelectorAll('[data-panel]').forEach(b=>b.addEventListener('click',()=>{panel=b.dataset.panel;document.querySelectorAll('[data-panel]').forEach(x=>x.setAttribute('aria-pressed',String(x===b)));['trolley','daily','quiz'].forEach(id=>$(id).hidden=panel!==id);clear();if(panel==='trolley')show()}));
+document.querySelectorAll('[data-panel]').forEach(b=>b.addEventListener('click',()=>{panel=b.dataset.panel;document.querySelectorAll('[data-panel]').forEach(x=>x.setAttribute('aria-pressed',String(x===b)));['trolley','daily'].forEach(id=>$(id).hidden=panel!==id);clear();if(panel==='trolley')show()}));
 document.addEventListener('visibilitychange',()=>{if(document.hidden)clear();else show()});show();
 
 function setLayout(layout){

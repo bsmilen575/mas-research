@@ -1,8 +1,10 @@
 'use strict';
 (() => {
- const host=document.getElementById('daily'), data=window.DAILY_RESULTS;
+ const host=document.getElementById('daily-results-view'), data=window.DAILY_RESULTS;
  const models=Object.keys(data.models), names=Object.fromEntries(data.coverage.map(r=>[r.provider,r.model]));
  const $=id=>document.getElementById(id), safe=s=>String(s).replace(/[&<>"']/g,c=>({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;',"'":'&#39;'}[c]));
+ let personal={},hasPersonal=false;
+ document.addEventListener("daily-comparison",e=>{personal=e.detail;hasPersonal=Object.keys(personal).length>0;render()});
  let family=1, variation=0, stage='initial_only', selected='all', paused=true;
  const fmt=x=>Number.isFinite(x)?x.toFixed(1):'—';
  const ci=r=>`95% interval ${fmt(r.ci_low)}–${fmt(r.ci_high)}%`;
@@ -19,15 +21,11 @@
   $('daily-count').textContent=`${q.scenario_id} · variation ${variation+1} of 4`;
   $('daily-prompt').innerHTML=`<div class="shared-setup"><span class="scenario-label">Shared situation</span><p>${safe(parts[0])}</p></div><div class="scenario-variation"><span class="scenario-label">Details for this question</span>${parts.slice(1).map(p=>`<p>${safe(p)}</p>`).join('')}</div>`;
   $('daily-options').innerHTML=Object.entries(q.options).map(([a,t])=>`<div class="daily-option"><span>${a}.</span><p>${safe(t)}</p></div>`).join('');
-  // Retain each binary track across updates so the marker transitions between recorded rates.
-  const three=Object.keys(q.options).length===3;
-  $('daily-chart-note').textContent=three?'Share of recorded answers choosing each action.':'Markers show the share choosing B, not an individual answer.';
-  $('daily-agents').hidden=three;
-  if(!three){
-   if(!$('daily-agents').children.length) $('daily-agents').innerHTML=models.map(p=>`<div class="daily-agent-row" data-provider="${p}"><div class="daily-agent-name">${safe(names[p])}<span class="daily-valid note"></span></div><div class="daily-axis"><span>A</span><div class="daily-track"><span class="daily-mid"></span><span class="daily-marker">${icon(p)}</span></div><span>B</span></div><p class="daily-share note"></p></div>`).join('');
-   models.forEach(p=>{const el=host.querySelector(`[data-provider="${p}"]`),r=rate(p,q.scenario_id,'B'),c=coverage(p,q.scenario_id);el.hidden=!visibleModels().includes(p);el.querySelector('.daily-marker').style.left=`${r.estimate??50}%`;el.querySelector('.daily-share').textContent=`${fmt(r.estimate)}% choose B · ${ci(r)}`;el.querySelector('.daily-valid').textContent=`${c.valid}/${c.planned} valid${c.unresolved?' · '+c.unresolved+' missing':''}`;});
-  }
-  $('daily-rates').innerHTML=three?visibleModels().map(p=>{const c=coverage(p,q.scenario_id);return `<div class="daily-three"><p>${safe(names[p])} <span class="note">${c.valid}/${c.planned} valid${c.unresolved?' · '+c.unresolved+' missing':''}</span></p>${Object.keys(q.options).map(a=>{const r=rate(p,q.scenario_id,a);return `<div class="daily-bar-row"><span>${a}</span><div class="daily-bar"><span style="width:${r.estimate??0}%"></span></div><span>${fmt(r.estimate)}%</span></div><p class="note daily-ci">${ci(r)}</p>`}).join('')}</div>`}).join(''):'';
+  $('daily-chart-note').textContent='Share of recorded answers choosing each action.';
+  $('daily-agents').hidden=true;
+  $('daily-rates').innerHTML=visibleModels().map(p=>{const c=coverage(p,q.scenario_id);return `<div class="daily-three"><p>${safe(names[p])} <span class="note">${c.valid}/${c.planned} valid${c.unresolved?' · '+c.unresolved+' missing':''}</span></p>${Object.keys(q.options).map(a=>{const r=rate(p,q.scenario_id,a);return `<div class="daily-bar-row"><span>${a}</span><div class="daily-bar"><span style="width:${r.estimate??0}%"></span></div><span>${fmt(r.estimate)}%</span></div><p class="note daily-ci">${ci(r)}</p>`}).join('')}</div>`}).join('');
+  const answer=personal[q.scenario_id];
+  $('daily-chart-note').textContent+=answer?` Your choice: ${answer}. ${q.options[answer]}`:hasPersonal?' You skipped this question.':'';
   $('daily-effect-action').innerHTML=Object.entries(q.options).map(([a,t])=>`<option value="${a}">${a}. ${safe(t)}</option>`).join('');
   $('daily-effect-action').value=data.method.axes.find(a=>a.question===family).action;
   renderEffects(); renderProfiles();

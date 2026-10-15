@@ -18,7 +18,7 @@
     node.addEventListener('click', action);
     return node;
   };
-  function clear() { host.replaceChildren(); }
+  function clear() { host.replaceChildren(); document.getElementById('daily-results-view').hidden=true; }
   function focusHeading(node) {
     node.tabIndex = -1;
     node.focus({ preventScroll: true });
@@ -30,9 +30,9 @@
   }
   function intro(focus = false) {
     clear();
-    const start = button('Begin', () => { responses = new Map(); current = 0; renderQuestion(); });
+    const start = button('Take the quiz', () => { responses = new Map(); current = 0; renderQuestion(); });
     start.disabled = !questions.length;
-    host.append(start);
+    host.append(start, button('Skip to model results', () => showResults(false))); 
     if (!questions.length) host.append(make('p', 'Questions are not available yet.', 'quiz-note'));
     if (focus) start.focus();
   }
@@ -46,7 +46,7 @@
     const q = questions[current];
     const top = make('div', undefined, 'quiz-top');
     top.append(make('p', `Question ${current + 1} of ${questions.length}`, 'quiz-progress'));
-    top.append(button('End and clear', endQuiz, 'quiz-text-button'));
+    top.append(button('See results so far', () => showResults(true), 'quiz-text-button'), button('End and clear', endQuiz, 'quiz-text-button'));
     host.append(top);
     const title = heading('What would you choose?');
     const prompt = make('div', undefined, 'quiz-prompt');
@@ -88,31 +88,30 @@
     host.append(make('p', 'Your answers are not submitted or saved.', 'quiz-note'));
     focusHeading(title);
   }
-  function renderReview() {
+  function renderReview() { showResults(true); }
+  function showResults(personal) {
     clear();
-    const title = heading('Your choices');
-    host.append(make('p', `${responses.size} of ${questions.length} questions answered.`));
-    host.append(make('p', 'Preference scoring and model comparison will appear here once the scoring method and model results are ready. These choices are not a measure of moral correctness.', 'quiz-note'));
-    const list = make('div', undefined, 'quiz-review');
-    questions.forEach((q, index) => {
-      const details = document.createElement('details');
-      const choice = q.options.find(option => option.label === responses.get(q.id));
-      details.append(make('summary', `Question ${index + 1} · ${choice ? `Response ${choice.label}` : 'Skipped'}`));
-      const prompt = make('div', undefined, 'quiz-prompt');
-      const setup = make('div', undefined, 'shared-setup');
-    setup.append(make('span', 'Shared situation', 'scenario-label'), make('p', q.setup));
-    const variation = make('div', undefined, 'scenario-variation');
-    variation.append(make('span', 'Details for this question', 'scenario-label'));
-    q.variation.split(/\n\s*\n/).forEach(paragraph => variation.append(make('p', paragraph)));
-    prompt.append(setup, variation);
-      details.append(prompt);
-      details.append(make('p', choice ? `${choice.label}. ${choice.text}` : 'No response.', 'quiz-review-answer'));
-      details.append(button('Edit response', () => { current = index; renderQuestion(); }));
-      list.append(details);
-    });
-    host.append(list);
-    host.append(make('p', 'Nothing has been submitted or saved. Starting again or reloading clears these choices.', 'quiz-note'));
-    host.append(button('Start again', endQuiz));
+    const count=personal?responses.size:0;
+    const title=heading(count?'Agreement with your choices':'Model results');
+    if(count){
+      host.append(make('p', `${count} of ${questions.length} questions answered. Skipped questions are excluded.`, 'quiz-note'));
+      const rates=window.DAILY_RESULTS.choice_rates;
+      Object.entries(window.DAILY_RESULTS.models).forEach(([provider,model])=>{
+        const values=[...responses].map(([id,action])=>rates.find(r=>r.provider===provider&&r.analysis==='initial_only'&&r.scenario_id===id&&r.action===action)?.estimate).filter(Number.isFinite);
+        const score=values.length?values.reduce((a,b)=>a+b,0)/values.length:null;
+        const row=make('div',undefined,'agreement-row');
+        row.append(make('p',({openai:'GPT-6 Astra',anthropic:'Claude Opus 5.5',xai:'Grok 4.7',jev:'Jev 1.13 (exploratory)'})[provider]||model));
+        const track=make('div',undefined,'agreement-track'),fill=make('span');
+        fill.style.width=`${score??0}%`; track.append(fill);
+        row.append(track,make('strong',score===null?'Unavailable':`${score.toFixed(1)}%`)); host.append(row);
+      });
+      host.append(make('p', 'Agreement averages each model’s response percentage for the action you chose, giving each answered question equal weight. It measures agreement on these questions, not moral correctness.', 'quiz-note'));
+    }else if(personal){host.append(make('p','No questions answered yet. Model results appear below.','quiz-note'));}
+    const controls=make('div',undefined,'quiz-controls');
+    controls.append(button(count?'Review or edit answers':'Take the quiz',()=>{current=0;renderQuestion();}),button('Start again',endQuiz,'quiz-text-button')); host.append(controls);
+    host.append(make('p','Answers stay only in this page. They are not submitted or saved; reloading clears them.','quiz-note'));
+    document.getElementById('daily-results-view').hidden=false;
+    document.dispatchEvent(new CustomEvent('daily-comparison',{detail:count?Object.fromEntries(responses):{}}));
     focusHeading(title);
   }
   intro();
