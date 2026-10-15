@@ -98,7 +98,7 @@
     const rates=(p,q)=>data.choice_rates.filter(r=>r.provider===p&&r.analysis==='initial_only'&&r.scenario_id===q);
     const winner=(rs)=>{const valid=rs.filter(r=>Number.isFinite(r.estimate));if(!valid.length)return null;const max=Math.max(...valid.map(r=>r.estimate));const best=valid.filter(r=>Math.abs(r.estimate-max)<1e-8);return best.length===1?best[0].action:'tie';};
     const title=heading(personal?'Your answers and the models':'How the models answered');
-    host.append(make('p','24 questions · 100 planned calls per model per question · 9,594 valid answers across four models.','quiz-note'));
+    host.append(make('p','24 questions · four models · 100 repeated calls per question','results-intro'));
     if(personal){
       const cards=make('div',undefined,'match-cards');
       providers.forEach(p=>{
@@ -111,18 +111,27 @@
       });host.append(cards);
       host.append(make('p','A match means your answer equals the model’s most frequent choice for that question. Ties do not count as matches. This is agreement on this test, not moral correctness.','quiz-note'));
     }
-    host.append(make('p','Each bar shows the model’s A/B/C choice shares across repeated calls. A, B and C refer to the actions in that row; expand a question to read them.','quiz-note'));
+    host.append(make('p','Select a question to read the scenario and answer options. Bars show how often each model chose each answer.','results-guide'));
+    const legend=make('div',undefined,'choice-legend');['A','B','C'].forEach(a=>{const item=make('span');item.append(make('i',undefined,`choice-${a}`),document.createTextNode(a==='C'?'C · where available':a));legend.append(item);});host.append(legend);
     const wrap=make('div',undefined,'comparison-scroll'),table=make('table',undefined,'comparison-grid'),head=make('thead'),hr=make('tr');
+    const cols=make('colgroup');[personal?26:28,...(personal?[6]:[]),...providers.map(()=>personal?17:18)].forEach(w=>{const col=make('col');col.style.width=`${w}%`;cols.append(col);});table.append(cols);
     hr.append(make('th','Question'));if(personal)hr.append(make('th','You'));providers.forEach(p=>hr.append(make('th',names[p])));head.append(hr);table.append(head);
     const body=make('tbody');
     questions.forEach((q,i)=>{
-      const row=make('tr'),desc=make('th'),details=make('details');
-      details.append(make('summary',`${i+1}. ${q.family} · ${q.id}`));
-      q.prompt.split(/\n\s*\n/).forEach(t=>details.append(make('p',t)));
-      q.options.forEach(o=>details.append(make('p',`${o.label}. ${o.text}`)));desc.append(details);row.append(desc);
+      const row=make('tr'),desc=make('th');desc.scope='row';
+      const expansion=make('tr',undefined,'question-expansion'),expandedCell=make('td');
+      expansion.hidden=true;expandedCell.colSpan=personal?6:5;expandedCell.id=`question-detail-${i}`;
+      const questionButton=button(`${i+1}. ${q.family}`,()=>{expansion.hidden=!expansion.hidden;questionButton.setAttribute('aria-expanded',String(!expansion.hidden));},'question-toggle');
+      questionButton.setAttribute('aria-expanded','false');questionButton.setAttribute('aria-controls',expandedCell.id);
+      questionButton.append(make('small',`Variation ${i%4+1} · ${q.id}`));desc.append(questionButton);row.append(desc);
+      const prompt=make('div',undefined,'expanded-question');
+      const text=make('div',undefined,'expanded-scenario');q.prompt.split(/\n\s*\n/).forEach(t=>text.append(make('p',t)));
+      const options=make('div',undefined,'expanded-options');q.options.forEach(o=>{const option=make('p');option.append(make('strong',`${o.label}. `),document.createTextNode(o.text));options.append(option);});
+      prompt.append(text,options);expandedCell.append(prompt);expansion.append(expandedCell);
       if(personal)row.append(make('td',responses.get(q.id),'your-choice'));
       providers.forEach(p=>{
         const rs=rates(p,q.id),w=winner(rs),cell=make('td');
+        cell.dataset.model=names[p];
         const match=personal&&w===responses.get(q.id);
         cell.append(make('strong',w==='tie'?'Tie':w||'Unavailable'));
         if(personal)cell.append(make('span',w==='tie'?' · tied':w===null?' · missing':match?' · same':' · different','match-label'));
@@ -132,9 +141,9 @@
         const cov=data.coverage.find(r=>r.provider===p&&r.scenario_id===q.id&&r.analysis==='initial_only');
         if(cov?.unresolved)cell.append(make('small',`${cov.valid}/${cov.planned} valid · ${cov.unresolved} missing`));
         row.append(cell);
-      });body.append(row);
+      });body.append(row,expansion);
     });table.append(body);wrap.append(table);host.append(wrap);
-    host.append(make('p','Choice shares give equal weight to each option order. Six interrupted calls are excluded. Jev used a different structured interface and remains exploratory.','quiz-note'));
+    const methods=make('details',undefined,'results-methods');methods.append(make('summary','About these results'));methods.append(make('p','9,594 valid answers out of 9,600 planned calls. Six interrupted calls are excluded. Choice shares give equal weight to each option order. Jev used a different structured interface and remains exploratory.'));host.append(methods);
     const controls=make('div',undefined,'quiz-controls');
     if(!personal)controls.append(button('Take the quiz',()=>{responses.clear();current=0;renderQuestion();}));
     controls.append(button('Start again',endQuiz));host.append(controls);
