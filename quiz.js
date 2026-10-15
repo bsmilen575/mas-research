@@ -30,16 +30,11 @@
   }
   function intro(focus = false) {
     clear();
-    const title = heading('Daily decisions');
-    host.append(make('p', 'Read each situation and select the response you would choose. Answer using the information given, even if you would prefer another option.'));
-    host.append(make('p', `There are ${questions.length} situations. Some are similar but differ in important details. You can go back, skip a question, or stop at any time.`));
-    host.append(make('p', 'This is a prototype. Responses stay in this page’s memory; they are not submitted or saved. Reloading the page or ending the quiz clears them.', 'quiz-note'));
-    host.append(make('p', 'At the end, you can review your choices. Preference scoring and comparison with models are not available yet.', 'quiz-note'));
     const start = button('Begin', () => { responses = new Map(); current = 0; renderQuestion(); });
     start.disabled = !questions.length;
     host.append(start);
     if (!questions.length) host.append(make('p', 'Questions are not available yet.', 'quiz-note'));
-    if (focus) focusHeading(title);
+    if (focus) start.focus();
   }
   function endQuiz() {
     responses.clear();
