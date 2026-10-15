@@ -79,3 +79,10 @@ $('pause').addEventListener('click',()=>{paused=!paused;$('pause').textContent=p
 $('next').addEventListener('click',next);
 document.querySelectorAll('[data-panel]').forEach(b=>b.addEventListener('click',()=>{panel=b.dataset.panel;document.querySelectorAll('[data-panel]').forEach(x=>x.setAttribute('aria-pressed',String(x===b)));['trolley','daily','quiz'].forEach(id=>$(id).hidden=panel!==id);clear();if(panel==='trolley')show()}));
 document.addEventListener('visibilitychange',()=>{if(document.hidden)clear();else show()});show();
+
+function setLayout(layout){
+ document.body.dataset.layout=layout;
+ document.querySelectorAll('[data-layout]').forEach(button=>button.setAttribute('aria-pressed',String(button.dataset.layout===layout)));
+}
+document.querySelectorAll('[data-layout]').forEach(button=>button.addEventListener('click',()=>setLayout(button.dataset.layout)));
+setLayout(window.matchMedia('(min-width: 1000px)').matches?'wide':'long');
