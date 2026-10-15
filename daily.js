@@ -10,7 +10,7 @@
   const q=window.DAILY_SCENARIOS[index];select.value=String(index);
   document.getElementById('daily-count').textContent=`${index+1} of ${window.DAILY_SCENARIOS.length}`;
   document.getElementById('daily-title').textContent=q.family;
-  document.getElementById('daily-prompt').innerHTML=q.prompt.split('\n\n').map(p=>`<p>${safe(p)}</p>`).join('');
+  document.getElementById('daily-prompt').innerHTML=`<div class="shared-setup"><span class="scenario-label">Shared situation</span><p>${safe(q.setup)}</p></div><div class="scenario-variation"><span class="scenario-label">Details for this question</span>${q.variation.split('\n\n').map(p=>`<p>${safe(p)}</p>`).join('')}</div>`;
   document.getElementById('daily-options').innerHTML=q.options.map(o=>`<div class="daily-option"><span>${o.label}.</span><p>${safe(o.text)}</p></div>`).join('');
   document.getElementById('daily-prev').disabled=index===0;
   document.getElementById('daily-next').disabled=index===window.DAILY_SCENARIOS.length-1;

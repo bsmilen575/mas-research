@@ -55,7 +55,12 @@
     host.append(top);
     const title = heading('What would you choose?');
     const prompt = make('div', undefined, 'quiz-prompt');
-    q.prompt.split(/\n\s*\n/).forEach(paragraph => prompt.append(make('p', paragraph)));
+    const setup = make('div', undefined, 'shared-setup');
+    setup.append(make('span', 'Shared situation', 'scenario-label'), make('p', q.setup));
+    const variation = make('div', undefined, 'scenario-variation');
+    variation.append(make('span', 'Details for this question', 'scenario-label'));
+    q.variation.split(/\n\s*\n/).forEach(paragraph => variation.append(make('p', paragraph)));
+    prompt.append(setup, variation);
     host.append(prompt);
     const fieldset = make('fieldset', undefined, 'quiz-options');
     fieldset.append(make('legend', 'Select one response'));
@@ -99,7 +104,12 @@
       const choice = q.options.find(option => option.label === responses.get(q.id));
       details.append(make('summary', `Question ${index + 1} · ${choice ? `Response ${choice.label}` : 'Skipped'}`));
       const prompt = make('div', undefined, 'quiz-prompt');
-      q.prompt.split(/\n\s*\n/).forEach(paragraph => prompt.append(make('p', paragraph)));
+      const setup = make('div', undefined, 'shared-setup');
+    setup.append(make('span', 'Shared situation', 'scenario-label'), make('p', q.setup));
+    const variation = make('div', undefined, 'scenario-variation');
+    variation.append(make('span', 'Details for this question', 'scenario-label'));
+    q.variation.split(/\n\s*\n/).forEach(paragraph => variation.append(make('p', paragraph)));
+    prompt.append(setup, variation);
       details.append(prompt);
       details.append(make('p', choice ? `${choice.label}. ${choice.text}` : 'No response.', 'quiz-review-answer'));
       details.append(button('Edit response', () => { current = index; renderQuestion(); }));
