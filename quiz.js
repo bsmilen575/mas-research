@@ -92,26 +92,8 @@
   function showResults(personal) {
     if(personal && responses.size!==questions.length) return;
     clear(); host.classList.add('quiz-results');
-    const data=window.DAILY_RESULTS, providers=Object.keys(data.models);
-    const names={openai:'GPT-6 Astra',anthropic:'Claude Opus 5.5',xai:'Grok 4.7',jev:'Jev 1.13'};
-    const rates=(p,q)=>data.choice_rates.filter(r=>r.provider===p&&r.analysis==='initial_only'&&r.scenario_id===q);
-    const winner=(rs)=>{const valid=rs.filter(r=>Number.isFinite(r.estimate));if(!valid.length)return null;const max=Math.max(...valid.map(r=>r.estimate));const best=valid.filter(r=>Math.abs(r.estimate-max)<1e-8);return best.length===1?best[0].action:'tie';};
-    const title=heading(personal?'Your answers and the models':'How the models answered');
-    host.append(make('p','24 questions · four models · 100 repeated calls per question','results-intro'));
-    if(personal){
-      const cards=make('div',undefined,'match-cards');
-      providers.forEach(p=>{
-        let matches=0,ties=0,missing=0;
-        questions.forEach(q=>{const w=winner(rates(p,q.id));if(w==='tie')ties++;else if(w===null)missing++;else if(w===responses.get(q.id))matches++;});
-        const card=make('div',undefined,'match-card');
-        card.append(make('p',names[p]),make('strong',`${matches} / ${questions.length}`),make('p',`${(matches/questions.length*100).toFixed(1)}% answered the same`));
-        if(ties||missing)card.append(make('small',`${ties} tied · ${missing} unavailable (not counted as matches)`));
-        cards.append(card);
-      });host.append(cards);
-      host.append(make('p','A match means your answer equals the model’s most frequent choice for that question. Ties do not count as matches. This is agreement on this test, not moral correctness.','quiz-note'));
-    }
-    host.append(make('p', 'Radar charts and misalignment scores will appear here once the scoring method is finalized.', 'quiz-note'));
-    const methods=make('details',undefined,'results-methods');methods.append(make('summary','About these results'));methods.append(make('p','9,594 valid answers out of 9,600 planned calls. Six interrupted calls are excluded. Choice shares give equal weight to each option order. Jev used a different structured interface and remains exploratory.'));host.append(methods);
+    window.renderDailyProfile(host,personal?Object.fromEntries(responses):null);
+    const title=host.querySelector('h2');
     const controls=make('div',undefined,'quiz-controls');
     if(!personal)controls.append(button('Take the quiz',()=>{responses.clear();current=0;renderQuestion();}));
     controls.append(button('Start again',endQuiz));host.append(controls);
