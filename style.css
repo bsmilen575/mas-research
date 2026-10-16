@@ -21,3 +21,12 @@ header{align-items:flex-start;flex-wrap:wrap}header h1{max-width:740px}nav{flex-
 
 /* Crosswalk scene: a single recorded trajectory. */
 .outcome svg{max-height:420px}.driving-car{offset-distance:0%;offset-rotate:auto;animation:drive-choice 3.8s cubic-bezier(.45,0,.2,1) forwards}.walking-person{animation:walk-in 1s ease-out both}.other-group{animation:fade-other 3.8s linear forwards}.travel-guide{opacity:.6}@keyframes drive-choice{0%,16%{offset-distance:0%}100%{offset-distance:100%}}@keyframes walk-in{from{transform:translateY(8px);opacity:0}to{transform:translateY(0);opacity:1}}@keyframes fade-other{0%,85%{opacity:1}100%{opacity:.35}}@media(prefers-reduced-motion:reduce){.driving-car{animation:none;offset-distance:100%}.walking-person,.other-group{animation:none}}
+
+/* Keep the optional prompt beside the scene, never above its flow. */
+.scene,body[data-layout="wide"] .scene,body[data-layout="long"] .scene{position:relative;display:grid;grid-template-columns:minmax(180px,1fr) minmax(0,580px) minmax(0,1fr);align-items:start;gap:22px;margin-top:24px}
+.scene>.prompt{grid-column:1;grid-row:1;border:0;align-self:start;min-width:0}
+.scene>.canvas{grid-column:2;grid-row:1;margin:0!important}
+.prompt summary{padding:0 0 12px;font-size:11px}
+.prompt pre{font-size:12px!important;line-height:1.8;margin:0;max-height:440px;overflow:auto}
+@media(max-width:1100px){.scene,body[data-layout="wide"] .scene,body[data-layout="long"] .scene{grid-template-columns:minmax(180px,.65fr) minmax(0,1.35fr);gap:22px}}
+@media(max-width:600px){.scene,body[data-layout="wide"] .scene,body[data-layout="long"] .scene{display:block;padding-top:32px}.scene>.prompt{position:absolute;left:0;top:0;width:auto;z-index:3}.scene>.prompt[open]{width:min(290px,85%);background:white;border:1px solid #ddd;padding:12px;box-shadow:0 4px 14px #0000000d}.prompt pre{max-height:360px}.scene>.canvas{margin:auto!important}}
