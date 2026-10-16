@@ -85,12 +85,12 @@ function show(){
  const order=scenarioOrder();
  $('next').disabled=!order.length;
  $('pause').disabled=!order.length;
- $('instruction').textContent=E.conditions.find(c=>c.name===condition).instruction||'No added value instruction.';
+ $('instruction').textContent=E.conditions.find(c=>c.name===condition).instruction||''; $('instruction').hidden=condition==='Baseline';
  if(!order.length){$('context').textContent='No matching scenarios';$('prompt').textContent='Human–animal comparisons are not included in this view. Choose another instruction to continue.';$('canvas').innerHTML='';return;}
  const s=scenarioMap.get(order[index]);
  $('context').textContent=`${s.dimension} comparisons · ${index+1} of ${order.length} · ${s.scenario_id}`;
  $('prompt').textContent=s.prompt.replace(/\\n/g,'\n');
- $('instruction').textContent=E.conditions.find(c=>c.name===condition).instruction||'No added value instruction.';
+ $('instruction').textContent=E.conditions.find(c=>c.name===condition).instruction||''; $('instruction').hidden=condition==='Baseline';
  $('canvas').innerHTML=renderChoices(s);
  if($('replay'))$('replay').onclick=show;
  document.querySelectorAll('[data-steer-condition]').forEach(button=>button.setAttribute('aria-pressed',String(button.dataset.steerCondition===condition)));
@@ -99,11 +99,11 @@ function show(){
 function next(){index=(index+1)%scenarioOrder().length;show()}
 $('model').innerHTML=providers.map(p=>`<option value="${p.id}">${esc(p.name)}</option>`).join('');
 $('model').addEventListener('change',e=>{selectedProvider=e.target.value;show()});
-$('condition').innerHTML=E.conditions.map(c=>`<option value="${esc(c.name)}">${esc(conditionLabels[c.name]||c.name)}</option>`).join('');
-function setCondition(value){const previousId=scenarioOrder()[index];condition=value;$('condition').value=value;const newIndex=scenarioOrder().indexOf(previousId);index=newIndex>=0?newIndex:0;paused=true;$('pause').textContent='Play';show();}
-$('condition').addEventListener('change',e=>setCondition(e.target.value));
+$('steering-options').innerHTML=E.conditions.map(c=>`<button type="button" data-steer-condition="${esc(c.name)}" aria-pressed="${c.name===condition}">${esc(c.instruction||'No added instruction')}</button>`).join('');
+function setCondition(value){const previousId=scenarioOrder()[index];condition=value;const newIndex=scenarioOrder().indexOf(previousId);index=newIndex>=0?newIndex:0;paused=true;$('pause').textContent='Play';$('steering-menu').open=false;show();}
 document.querySelectorAll('[data-steer-condition]').forEach(button=>button.addEventListener('click',()=>setCondition(button.dataset.steerCondition)));
-$('steer').addEventListener('click',()=>{let open=$('steering').hidden;$('steering').hidden=!open;$('steer').setAttribute('aria-expanded',String(open));});
+$('steering-menu').addEventListener('keydown',e=>{if(e.key==='Escape'){$('steering-menu').open=false;$('steering-menu').querySelector('summary').focus()}});
+document.addEventListener('click',e=>{if(!$('steering-menu').contains(e.target))$('steering-menu').open=false});
 $('pause').addEventListener('click',()=>{paused=!paused;$('pause').textContent=paused?'Play':'Pause';show()});
 $('next').addEventListener('click',next);
 document.querySelectorAll('[data-panel]').forEach(b=>b.addEventListener('click',()=>{panel=b.dataset.panel;document.querySelectorAll('[data-panel]').forEach(x=>x.setAttribute('aria-pressed',String(x===b)));['research-data','trolley','daily'].forEach(id=>$(id).hidden=panel!==id);clear();if(panel==='trolley')show()}));
