@@ -39,12 +39,25 @@ const conditionDimensions={
  'Equal weighting across species':['species','species_number']
 };
 function scenarioOrder(){const dims=conditionDimensions[condition];return E.scenario_order.filter(id=>!dims||dims.includes(scenarioMap.get(id).dimension))}
+function scenarioCharacter(description){
+ const t=description.toLowerCase();
+ const female=/\b(female|woman|women|girl|girls)\b/.test(t);
+ const male=/\b(male|man|men|boy|boys)\b/.test(t);
+ const hair=female?'long':male?'short':'none';
+ let kind='adult';
+ if(/\b(boy|boys|girl|girls)\b/.test(t))kind='child';
+ else if(t.includes('elderly'))kind='older';
+ else if(/\bdoctors?\b/.test(t))kind='doctor';
+ else if(/\bexecutives?\b/.test(t))kind='executive';
+ // Unspecified gender stays neutral; unapproved appearance cues remain textual.
+ return window.CHARACTER_ART[kind+'-'+hair] || window.CHARACTER_ART['adult-'+hair] || window.CHARACTER_ART['adult-none'];
+}
 function outcome(s,save){
  const target=save==='A'?300:100;
  const path=`M200 40 L200 90 C200 145 ${target} 140 ${target} 213`;
  function people(text,x,saved){
   const count={a:1,an:1,two:2,three:3,four:4,five:5}[text.split(' ')[0]]||1;
-  return `<g class="road-group ${saved?'surviving-group':'other-group'}">${Array.from({length:count},(_,i)=>`<g transform="translate(${x+(i-(count-1)/2)*26} ${282+(i%2)*5})"><g class="walking-person" style="animation-delay:${i*110}ms">${person('adult')}</g></g>`).join('')}</g>`;
+  return `<g class="road-group ${saved?'surviving-group':'other-group'}">${Array.from({length:count},(_,i)=>`<g transform="translate(${x+(i-(count-1)/2)*26} ${282+(i%2)*5})"><g class="walking-person" style="animation-delay:${i*110}ms">${scenarioCharacter(text)}</g></g>`).join('')}</g>`;
  }
  return `<div class="outcome"><svg viewBox="0 0 400 350" role="img" aria-label="Recorded choice: save ${save}, ${esc(save==='A'?s.option_a:s.option_b)}.">
  <defs><marker id="route-arrow" viewBox="0 0 10 10" refX="8" refY="5" markerWidth="5" markerHeight="5" orient="auto-start-reverse"><path d="M0 0L10 5L0 10" fill="none" stroke="#999"/></marker></defs>
