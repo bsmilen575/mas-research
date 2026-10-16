@@ -41,13 +41,12 @@
   toggle.setAttribute('aria-label',playing?'Pause automatic steering cycle':'Resume automatic steering cycle');
   if(playing&&!section.hidden&&!document.hidden){
    timer=setTimeout(()=>{
-    if(document.activeElement===picker){schedule();return;}
     picker.selectedIndex=(picker.selectedIndex+1)%picker.options.length;
     update();schedule();
    },3200);
   }
  }
- picker.addEventListener('change',()=>{playing=false;update();schedule();});
+ picker.addEventListener('change',()=>{update();schedule();});
  toggle.addEventListener('click',()=>{playing=!playing;schedule();});
  new MutationObserver(()=>{reserveInstructionSpace();schedule();}).observe(section,{attributes:true,attributeFilter:['hidden']});
  document.addEventListener('visibilitychange',schedule);
