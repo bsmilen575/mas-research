@@ -7,3 +7,6 @@ button,select{border-color:#888;color:#111;font-weight:500}button:hover{border-c
 .quiz-prompt,#daily-prompt{font-size:16px}.quiz-option,.daily-option{border-color:#999}.results-intro,.results-guide,.results-methods{font-size:14px;color:#333}.comparison-grid,.question-toggle{font-size:14px}.comparison-grid small,.match-label,.choice-legend{font-size:12px;color:#333}.comparison-grid th,.comparison-grid td{border-bottom-color:#aaa}.match-card{font-size:14px}.match-card strong{font-weight:600}.daily-details small,#daily-profiles small,.scenario-label{color:#444;font-size:12px}.shared-setup .scenario-label{color:#eee}.quiz-progress,.quiz-note{color:#444}.choice-B{background:#aaa}.choice-C{background:#ddd}
 :fullscreen{background:white;overflow-y:auto}
 @media(max-width:600px){h1{font-size:19px}.toolbar,.model-picker,.steer-picker{font-size:12px}.group-names{font-size:13px}.layout-switch{flex-wrap:wrap}.radar-grid h3{font-size:16px}}
+
+/* Reserve chart and legend geometry throughout the steering cycle. */
+.radar-grid img{aspect-ratio:285.624871 / 276.148477;min-height:0}.radar-grid figcaption strong{font-variant-numeric:tabular-nums}#radar-instruction{overflow:visible}

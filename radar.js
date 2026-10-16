@@ -11,12 +11,26 @@
    const img=figure.querySelector('img');img.src=record.src;img.alt=`${figure.querySelector('h3').textContent}: ${names[condition]}, compared with human preferences${condition==='Baseline'?'':' and the model baseline'}`;
    figure.querySelector('figcaption strong').textContent=record.MIS.toFixed(3);
   });
-  document.getElementById('radar-baseline-key').hidden=condition==='Baseline';
+  const key=document.getElementById('radar-baseline-key');
+  key.hidden=false;key.style.visibility=condition==='Baseline'?'hidden':'visible';
   const text=window.EXPERIMENT.conditions.find(c=>c.name===condition)?.instruction||'';
   document.getElementById('radar-instruction').textContent=text;
-  document.getElementById('radar-instruction').hidden=!text;
+  document.getElementById('radar-instruction').hidden=false;
  }
  const section=document.getElementById('research-data');
+ const instruction=document.getElementById('radar-instruction');
+ function reserveInstructionSpace(){
+  if(section.hidden)return;
+  const probe=instruction.cloneNode(false);
+  probe.removeAttribute('id');probe.hidden=false;
+  const computed=getComputedStyle(instruction);
+  Object.assign(probe.style,{position:'absolute',visibility:'hidden',pointerEvents:'none',height:'auto',minHeight:'0',margin:'0',width:instruction.getBoundingClientRect().width+'px',font:computed.font,lineHeight:computed.lineHeight});
+  section.append(probe);
+  let height=0;
+  window.EXPERIMENT.conditions.forEach(c=>{probe.textContent=c.instruction||' ';height=Math.max(height,probe.getBoundingClientRect().height);});
+  probe.remove();instruction.style.height=Math.ceil(height)+'px';
+ }
+ window.addEventListener('resize',reserveInstructionSpace);
  const toggle=document.createElement('button');
  toggle.type='button';toggle.id='radar-cycle';
  picker.parentElement.insertAdjacentElement('afterend',toggle);
@@ -35,7 +49,7 @@
  }
  picker.addEventListener('change',()=>{playing=false;update();schedule();});
  toggle.addEventListener('click',()=>{playing=!playing;schedule();});
- new MutationObserver(schedule).observe(section,{attributes:true,attributeFilter:['hidden']});
+ new MutationObserver(()=>{reserveInstructionSpace();schedule();}).observe(section,{attributes:true,attributeFilter:['hidden']});
  document.addEventListener('visibilitychange',schedule);
  update();schedule();
 })();
