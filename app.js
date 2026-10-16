@@ -100,7 +100,7 @@ function next(){index=(index+1)%scenarioOrder().length;show()}
 $('model').innerHTML=providers.map(p=>`<option value="${p.id}">${esc(p.name)}</option>`).join('');
 $('model').addEventListener('change',e=>{selectedProvider=e.target.value;show()});
 $('steering-options').innerHTML=E.conditions.map(c=>`<button type="button" data-steer-condition="${esc(c.name)}" aria-pressed="${c.name===condition}">${esc(c.instruction||'No added instruction')}</button>`).join('');
-function setCondition(value){const previousId=scenarioOrder()[index];condition=value;const newIndex=scenarioOrder().indexOf(previousId);index=newIndex>=0?newIndex:0;paused=true;$('pause').textContent='Play';$('steering-menu').open=false;show();}
+function setCondition(value){const previousId=scenarioOrder()[index];condition=value;$('steer-current').textContent=conditionLabels[value]||value;const newIndex=scenarioOrder().indexOf(previousId);index=newIndex>=0?newIndex:0;paused=true;$('pause').textContent='Play';$('steering-menu').open=false;show();}
 document.querySelectorAll('[data-steer-condition]').forEach(button=>button.addEventListener('click',()=>setCondition(button.dataset.steerCondition)));
 $('steering-menu').addEventListener('keydown',e=>{if(e.key==='Escape'){$('steering-menu').open=false;$('steering-menu').querySelector('summary').focus()}});
 document.addEventListener('click',e=>{if(!$('steering-menu').contains(e.target))$('steering-menu').open=false});
