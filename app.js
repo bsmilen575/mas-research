@@ -53,27 +53,49 @@ const conditionDimensions={
  'Equal weighting across species':['species','species_number']
 };
 function scenarioOrder(){const dims=conditionDimensions[condition];return E.scenario_order.filter(id=>!dims||dims.includes(scenarioMap.get(id).dimension))}
+function outcome(s,save){
+ const target=save==='A'?300:100;
+ const path=`M200 35 C200 105 ${target} 110 ${target} 195`;
+ function people(text,x,saved){const count={a:1,an:1,two:2,three:3,four:4,five:5}[text.split(' ')[0]]||1;return `<g opacity="${saved?1:.38}">${Array.from({length:count},(_,i)=>`<g class="pedestrian" style="animation-delay:${i*90}ms" transform="translate(${x+(i-(count-1)/2)*28} 244) scale(.8)">${person('adult')}</g>`).join('')}</g>${saved?`<path d="M${x-76} 278H${x+76}" stroke="#222" stroke-width="2"/>`:''}<text x="${x}" y="298" text-anchor="middle" font-size="12">${x===100?'A':'B'} · ${saved?'saved':'not saved'}</text>`}
+ return `<div class="outcome"><div class="outcome-heading"><b>Save ${save}</b><span>${esc(save==='A'?s.option_a:s.option_b)}</span></div><svg viewBox="0 0 400 310" role="img" aria-label="Save ${save}: ${esc(save==='A'?s.option_a:s.option_b)}. The other group is not saved."><path d="M12 12V275M388 12V275" stroke="#ccc" fill="none"/><path d="M200 80V275" stroke="#ddd" stroke-dasharray="10 10"/><path d="${path}" class="route" fill="none" stroke="#222" stroke-width="2" stroke-dasharray="5 6"/>${people(s.option_a,100,save==='A')}${people(s.option_b,300,save==='B')}<g class="outcome-car" style="offset-path:path('${path}')"><rect x="-17" y="-28" width="34" height="56" rx="8" fill="white" stroke="#222" stroke-width="1.5"/><path d="M-12-16H12L10-6H-10ZM-10 12H10L12 20H-12Z" fill="#eee" stroke="#222"/><path d="M-20-16V-5M20-16V-5M-20 9V20M20 9V20" stroke="#222" stroke-width="2"/></g></svg><div class="group-names"><span>A · ${esc(s.option_a)}</span><span>B · ${esc(s.option_b)}</span></div></div>`;
+}
+function renderChoices(s){
+ const steering=condition!=='Baseline';
+ const rows=providers.map(p=>{const r=responseMap.get(`${s.scenario_id}|${condition}|${p.id}`),base=responseMap.get(`${s.scenario_id}|Baseline|${p.id}`);return {p,r,base,changed:!!r?.final_choice&&!!base?.final_choice&&r.final_choice!==base.final_choice}});
+ const changed=rows.filter(x=>x.changed).length;
+ const ref=E.human_reference[s.dimension];const b=s.positive_choice==='B'?ref.preference:1-ref.preference;
+ return `<div class="outcome-pair">${outcome(s,'A')}${outcome(s,'B')}</div><p class="note schematic-note">Schematic outcomes. Driving paths are not specified in the model prompts.</p>${steering?`<div class="change-summary" aria-live="polite"><strong>${changed} / ${providers.length}</strong> models changed their choice <span class="note">baseline → instruction</span> <button id="replay-steer">Replay change ↻</button></div>`:''}<div class="decision-ends"><span>Save A</span><span>Save B</span></div><div class="decision-rows">${rows.map(({p,r,base,changed},i)=>{const choice=r?.final_choice,start=steering?base?.final_choice:null;return `<div class="decision-row ${changed?'changed':''}"><span class="decision-model">${esc(p.name)}</span><div class="decision-track">${steering&&start?`<span class="baseline-mark" style="left:${start==='A'?0:100}%" title="Baseline: ${start}">${start}</span>`:''}<span class="decision-agent" id="decision-agent-${i}" style="left:${start==='A'?0:start==='B'?100:50}%"><svg viewBox="-22 -35 44 58" aria-hidden="true">${character(p.shape)}</svg></span></div><span class="decision-result">${steering?`<span class="before">${esc(base?.final_choice||'—')}</span> → `:''}<b>${esc(choice||'—')}</b><small>${steering?(changed?'changed':'unchanged'):(r?.choice_source!=='initial'?'retry':'recorded')}</small></span></div>`}).join('')}<div class="decision-row human-decision"><span class="decision-model">Human reference</span><div class="decision-track"><span class="human-tick" style="left:${100*b}%"></span></div><span class="decision-result">${(100*b).toFixed(1)}% B</span></div></div><p class="note figure-note">Neutral figures show counts only. Human reference: ${esc(s.dimension)} aggregate, not votes on this exact question.</p>`;
+}
+
 function show(){
  clear(); if(panel!=='trolley')return;
  const order=scenarioOrder();
  $('next').disabled=!order.length;
  $('pause').disabled=!order.length;
  $('instruction').textContent=E.conditions.find(c=>c.name===condition).instruction||'No added value instruction.';
- if(!order.length){$('context').textContent='No matching scenarios';$('prompt').textContent='Human–animal comparisons are not included in this view. Choose another instruction to continue.';$('canvas').innerHTML='';scores();return;}
+ if(!order.length){$('steering-effect').hidden=true;$('context').textContent='No matching scenarios';$('prompt').textContent='Human–animal comparisons are not included in this view. Choose another instruction to continue.';$('canvas').innerHTML='';scores();return;}
  const s=scenarioMap.get(order[index]);
  $('context').textContent=`${s.dimension} comparisons · ${index+1} of ${order.length} · ${s.scenario_id}`;
  $('prompt').textContent=s.prompt.replace(/\\n/g,'\n');
  $('instruction').textContent=E.conditions.find(c=>c.name===condition).instruction||'No added value instruction.';
- let drawing=`${group(s.option_a,290)}${group(s.option_b,710)}<text x="290" y="139" text-anchor="middle" font-size="15">A · ${esc(s.option_a)}</text><text x="710" y="139" text-anchor="middle" font-size="15">B · ${esc(s.option_b)}</text>`;
- providers.forEach((p,i)=>{let y=240+i*105;drawing+=`<path d="M290 ${y}H710" stroke="#ddd" fill="none"/><path d="M290 ${y-5}V${y+5}M710 ${y-5}V${y+5}" stroke="#aaa"/><g class="moving" id="agent-${i}" transform="translate(500 ${y})"><g class="idle">${character(p.shape)}</g><text y="40" text-anchor="middle" font-size="14">${esc(p.name)}</text><text id="answer-${i}" y="59" text-anchor="middle" font-size="12" class="secondary"></text></g>`});
- drawing+=humanRow(s,'main');
- $('canvas').innerHTML=`<svg viewBox="110 15 780 680" role="img" aria-label="Recorded model choices. A: ${esc(s.option_a)}. B: ${esc(s.option_b)}.">${drawing}</svg><p class="note figure-note">Neutral figures represent counts only. Human marker: dimension-level reference, not responses to this exact question.</p>`;
- later(()=>providers.forEach((p,i)=>{const r=responseMap.get(`${s.scenario_id}|${condition}|${p.id}`);let choice=r?.final_choice;const x=choice==='A'?290:choice==='B'?710:500; $('agent-'+i).style.transform=`translate(${x}px, ${240+i*105}px)`;$('answer-'+i).textContent=choice?`saves ${choice}${r.choice_source!=='initial'?' · retry':r.interface==='native_decision'?' · native choice':''}`:'No valid choice';}),500);
+ $('canvas').innerHTML=renderChoices(s);
+ function animateChoices(){
+  providers.forEach((p,i)=>{const base=responseMap.get(`${s.scenario_id}|Baseline|${p.id}`);$('decision-agent-'+i).style.left=condition==='Baseline'?'50%':base?.final_choice==='A'?'0%':base?.final_choice==='B'?'100%':'50%'});
+  later(()=>providers.forEach((p,i)=>{const r=responseMap.get(`${s.scenario_id}|${condition}|${p.id}`);$('decision-agent-'+i).style.left=r?.final_choice==='A'?'0%':r?.final_choice==='B'?'100%':'50%'}),350);
+ }
+ animateChoices();
+ if($('replay-steer'))$('replay-steer').onclick=animateChoices;
+ document.querySelectorAll('[data-steer-condition]').forEach(button=>button.setAttribute('aria-pressed',String(button.dataset.steerCondition===condition)));
+ const focused=condition==='Conflict control'?'age':condition==='Positive control'?'gender':null;
+ $('steering-effect').hidden=!focused;
+ if(focused){const target=focused==='age'?'older people':'females';$('steering-effect').innerHTML=`<span>Saving ${target} · all ${focused} comparisons</span>`+providers.map(p=>{const base=E.metrics.find(m=>m.provider===p.id&&m.condition==='Baseline'),now=E.metrics.find(m=>m.provider===p.id&&m.condition===condition);const value=m=>100*(focused==='age'?1-Number(m.p_age):Number(m.p_gender));return `<div>${p.name}<strong>${value(base).toFixed(1)}% → ${value(now).toFixed(1)}%</strong></div>`}).join('');}
  scores(); if(!paused&&!document.hidden)later(next,10000);
 }
 function next(){index=(index+1)%scenarioOrder().length;show()}
 $('condition').innerHTML=E.conditions.map(c=>`<option value="${esc(c.name)}">${esc(conditionLabels[c.name]||c.name)}</option>`).join('');
-$('condition').addEventListener('change',e=>{condition=e.target.value;index=0;show()});
+function setCondition(value){const previousId=scenarioOrder()[index];condition=value;$('condition').value=value;const newIndex=scenarioOrder().indexOf(previousId);index=newIndex>=0?newIndex:0;paused=true;$('pause').textContent='Play';show();}
+$('condition').addEventListener('change',e=>setCondition(e.target.value));
+document.querySelectorAll('[data-steer-condition]').forEach(button=>button.addEventListener('click',()=>setCondition(button.dataset.steerCondition)));
 $('steer').addEventListener('click',()=>{let open=$('steering').hidden;$('steering').hidden=!open;$('steer').setAttribute('aria-expanded',String(open));});
 $('pause').addEventListener('click',()=>{paused=!paused;$('pause').textContent=paused?'Play':'Pause';show()});
 $('next').addEventListener('click',next);
