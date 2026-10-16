@@ -30,7 +30,7 @@
     if(document.activeElement===picker){schedule();return;}
     picker.selectedIndex=(picker.selectedIndex+1)%picker.options.length;
     update();schedule();
-   },5000);
+   },3200);
   }
  }
  picker.addEventListener('change',()=>{playing=false;update();schedule();});
