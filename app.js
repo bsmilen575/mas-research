@@ -61,7 +61,7 @@ function renderChoices(s){
  const r=responseMap.get(`${s.scenario_id}|${condition}|${selectedProvider}`);
  const choice=r?.final_choice;
  if(!['A','B'].includes(choice))return '<p class="no-answer">No recorded answer for this model and instruction.</p>';
- return outcome(s,choice)+`<div class="animation-caption"><span>${esc(providers.find(p=>p.id===selectedProvider).name)} · saves ${choice}${r.choice_source!=='initial'?' · recovered answer':''}</span><button id="replay">Replay ↻</button></div><p class="note schematic-note">Recorded choice. The car moves toward the group not saved; its path is illustrative.</p>`;
+ return outcome(s,choice)+`<div class="animation-caption"><button id="replay">Replay ↻</button></div>`;
 }
 
 function show(){
