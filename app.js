@@ -26,7 +26,7 @@ function humanRow(s,prefix){
  </g>`;
 }
 
-let index=0,condition='Baseline',panel='research-data',selectedProvider='openai',paused=false,timers=[];
+let index=0,condition='Baseline',panel='trolley',selectedProvider='openai',paused=false,timers=[];
 const scenarioMap=new Map(E.scenarios.map(s=>[s.scenario_id,s]));
 const responseMap=new Map(E.records.map(r=>[`${r.scenario_id}|${r.condition}|${r.provider}`,r]));
 const $=id=>document.getElementById(id);
