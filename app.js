@@ -49,6 +49,9 @@ function scenarioCharacter(description){
  else if(t.includes('elderly'))kind='older';
  else if(/\bdoctors?\b/.test(t))kind='doctor';
  else if(/\bexecutives?\b/.test(t))kind='executive';
+ else if(/\bathletes?\b/.test(t))kind='athlete';
+ else if(/\blarge\b/.test(t))kind='large';
+ else if(/\bcriminals?\b/.test(t))kind='criminal';
  // Unspecified gender stays neutral; unapproved appearance cues remain textual.
  return window.CHARACTER_ART[kind+'-'+hair] || window.CHARACTER_ART['adult-'+hair] || window.CHARACTER_ART['adult-none'];
 }
