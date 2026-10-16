@@ -16,5 +16,26 @@
   document.getElementById('radar-instruction').textContent=text;
   document.getElementById('radar-instruction').hidden=!text;
  }
- picker.addEventListener('change',update);update();
+ const section=document.getElementById('research-data');
+ const toggle=document.createElement('button');
+ toggle.type='button';toggle.id='radar-cycle';
+ picker.parentElement.insertAdjacentElement('afterend',toggle);
+ let playing=true, timer=null;
+ function schedule(){
+  clearTimeout(timer);timer=null;
+  toggle.textContent=playing?'Pause':'Play';
+  toggle.setAttribute('aria-label',playing?'Pause automatic steering cycle':'Resume automatic steering cycle');
+  if(playing&&!section.hidden&&!document.hidden){
+   timer=setTimeout(()=>{
+    if(document.activeElement===picker){schedule();return;}
+    picker.selectedIndex=(picker.selectedIndex+1)%picker.options.length;
+    update();schedule();
+   },5000);
+  }
+ }
+ picker.addEventListener('change',()=>{playing=false;update();schedule();});
+ toggle.addEventListener('click',()=>{playing=!playing;schedule();});
+ new MutationObserver(schedule).observe(section,{attributes:true,attributeFilter:['hidden']});
+ document.addEventListener('visibilitychange',schedule);
+ update();schedule();
 })();
