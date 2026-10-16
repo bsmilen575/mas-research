@@ -20,21 +20,21 @@
   const human=answers?score.vector(answers,spec):null;
   const section=el('section',undefined,'daily-profile-results');
   section.append(el('h2',human?'Your preference profile':'Model preference profiles'));
-  section.append(el('p','Scores use the LL and HH variations in each of the six situations.','profile-intro'));
-  const legend=el('div',undefined,'profile-legend');legend.append(el('span','— Model · LL/HH average','model-legend'));if(human)legend.append(el('span','– – You','you-legend'));
-  const label=el('label'),toggle=el('input');toggle.type='checkbox';label.append(toggle,document.createTextNode(' Show LL and HH separately'));legend.append(label);section.append(legend);
+  const legend=el('div',undefined,'profile-legend');legend.append(el('span','— Model','model-legend'));if(human)legend.append(el('span','– – You','you-legend'));
+  section.append(legend);
   const grid=el('div',undefined,'daily-profile-grid');section.append(grid);
   function draw(){grid.replaceChildren();for(const [provider,model] of Object.entries(spec.model_vectors)){
-   const figure=el('figure');figure.append(el('h3',names[provider]));const chart=el('div');chart.innerHTML=radar(model,human,spec.condition_vectors.LL[provider],spec.condition_vectors.HH[provider],toggle.checked);figure.append(chart);
+   const figure=el('figure');figure.append(el('h3',names[provider]));const chart=el('div');chart.innerHTML=radar(model,human,spec.condition_vectors.LL[provider],spec.condition_vectors.HH[provider],false);figure.append(chart);
    if(human){const caption=el('figcaption','Misalignment with you');caption.append(el('strong',score.mis(human,model).toFixed(3)));figure.append(caption);}grid.append(figure);
-  }}toggle.addEventListener('change',draw);draw();
+  }}draw();
+  section.append(el('p','Misalignment score range: 0–√10 (approximately 3.16). Lower means closer; 0 means identical profiles.','profile-intro'));
   const detail=el('details',undefined,'profile-method');detail.append(el('summary','How the scores work'));
   detail.append(el('p','Each choice contributes to its assigned preference labels. LL and HH have equal weight within a situation; contributing situations have equal weight within a label. The other 12 questions do not contribute to these scores.'));
   detail.append(el('p','Misalignment is the Euclidean distance between your ten scores and the model’s ten scores, using proportions from 0 to 1. Lower means closer to your answers; 0 means identical profiles. The maximum is √10 ≈ 3.16. This is a personal comparison, not a population estimate or a measure of moral correctness.'));
   detail.append(el('p','These labels describe choices in this test, not independently measured personality traits. A middle score can reflect opposite choices in LL and HH.'));
   detail.append(el('p',spec.Q6_limitation));
   detail.append(el('p','Models: 4,795 valid initial responses in the scored subset; five unresolved responses excluded. Each model’s option orders are equally weighted.'));
-  detail.append(el('p','LL = both varied factors low; HH = both high. Orange dotted lines show LL; green dashed lines show HH.'));
+  detail.append(el('p','LL = both varied factors low; HH = both high.'));
   section.append(detail);host.append(section);return human;
  };
 })();
