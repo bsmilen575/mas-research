@@ -17,5 +17,3 @@ We are interested in understanding how models can be durably steered, and creati
 | Competing pressures | Does the steered preference survive conflicting goals, examples, persuasion, or other agents' opinions? |
 | Adversarial resistance | Can instructions hidden in documents, tool outputs, or peer messages override the steered preference? |
 | Memory continuity | Does the steered preference survive summarization, truncation, or a new session with saved memory? |
-
-These buckets define our proposed evaluation scope. For context tests, distinguish an instruction that remains available but loses influence from one that has been removed or altered by memory handling.
