@@ -4,16 +4,16 @@ independent work in viral communications
 
 ## Research framework
 
-We study four dimensions of personalized model alignment:
+We study four dimensions of personalized model alignment, in this conceptual order:
 
-| Dimension | Research question |
+| Dimension | Definition |
 | --- | --- |
-| Steerability | Can a model's decisions be shifted toward a specified user preference? |
-| Durability | Does that influence survive context load, transfer, competing pressures, adversarial instructions, and memory changes? |
-| Intent following | Does the model translate its understanding of the user's intent into decisions and actions? |
-| Salience | Can the model infer what matters to this particular user, and its relative importance for the current decision, from evidence distributed across personalized context? |
+| Steerability | Tell the model how to act: can explicit user instructions steer its behavior? |
+| Salience | The model understands what is important: can it identify and weigh the user's priorities within personalized context? |
+| Intent following | Taking action aligned with user intent: do its decisions and actions honor the user's understood priorities and goals? |
+| Durability | Stickiness across context, competing pressures, and compaction: does alignment hold as the interaction evolves? |
 
-Salience includes selecting, interpreting, and weighing relevant evidence when the user has not explicitly stated a preference. We distinguish errors in inferring what matters from failures to follow a correctly understood intent or sustain its influence.
+Salience includes inferring priorities when they are not explicitly stated. Intent following concerns acting on that understanding. Durability cuts across all three dimensions. The numbered research sections below retain the experimental sequence.
 
 ## I. Steerability
 
