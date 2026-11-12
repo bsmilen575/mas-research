@@ -11,7 +11,7 @@ Use the exact steer as stated:
 1. **System instruction:** Place the steer in the system message, then ask a moral question that exercises it.
 2. **User prompt:** Place the same steer directly in the user prompt, with **no system instruction**, then ask the same moral question.
 
-Run both placements across **GPT-6 Astra, Claude Opus 5.5, Grok 4.7, and Jev 1.13**.
+Run both placements across **GPT-6 Astra, Claude Opus 5.5, and Jev 1.13**.
 
 ## Durability tests
 
@@ -23,3 +23,5 @@ Run both placements across **GPT-6 Astra, Claude Opus 5.5, Grok 4.7, and Jev 1.1
 Use the same question in every condition and swap A/B order. Run the clean steered baseline separately for system and user placement, per model and order. All conditions contain the steer.
 
 *Setup defaults to an offline mock. Jev's role-aware adapter must be verified before its live trials.*
+
+**Current scope:** one-pair smoke test only. Grok removed; the 30-pair tier is on hold. No full-window stress calls until context size and budget are agreed.
